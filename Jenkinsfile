@@ -12,5 +12,6 @@ node('ltecomm') {
         junit 'gameoflife-web/target/surefire-reports/*.xml'
         archiveArtifacts 'gameoflife-web/target/*.war'    
     }
- 
+
 }
+
