@@ -1,16 +1,37 @@
 pipeline {
-    agent { label 'ltecomm' }
+    agent { label 'ltecomm'}
+    triggers {
+        cron('H * * * 1-5')
+    }
+    parameters {
+        string(name: 'MAVENGOAL', defaultValue: 'clean package', description: 'Enter your maven goal')
+    }
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+    }
     stages {
-        stage('SCM') {
+        stage('scm') {
             steps {
-                git 'https://github.com/wakaleo/game-of-life.git'
+                git 'https://github.com/wakaleo/game-of-life.git'        
             }
         }
-        stage('Build') {
+        stage('build') {
             steps {
-                sh 'mvn clean package'
+                sh script: "mvn ${params.MAVENGOAL}"
+            }
+        }
+        stage('post build') {
+            steps {
+                junit 'gameoflife-web/target/surefire-reports/*.xml'
+                archiveArtifacts 'gameoflife-web/target/*.war'
+                stash name: 'warfile', includes: 'gameoflife-web/target/*.war'
+            }
+        }
+        stage ('copy to other node') {
+            agent { label 'ltelog' }
+            steps {
+                unstash name: 'warfile'
             }
         }
     }
 }
-
